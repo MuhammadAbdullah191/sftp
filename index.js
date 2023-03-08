@@ -220,6 +220,6 @@ app.post('/', async (req, res) => {
 	sftp.end();
 })
 
-app.listen(3000,(()=>{
+app.listen(process.env.PORT || 5000,(()=>{
 	console.log("listing to port 3000")
 }))
