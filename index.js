@@ -122,10 +122,10 @@ const downloadFile = async (array, remotePath, localPath) => {
 
 app.delete('/', async (req, res) => {
 	var array = [{
-		path: "./path1",
+		path: ".",
 		filename: "sampleText1.txt",
 	}, {
-		path: "./path1",
+		path: ".",
 		filename: "sampleDoc.csv",
 	}]
 	const response = {
@@ -171,11 +171,11 @@ app.delete('/', async (req, res) => {
 
 app.post('/', async (req, res) => {
 	var array = [{
-		path: "./path1",
+		path: ".",
 		filename: "sampleText1.txt",
 		body: "samplebody"
 	}, {
-		path: "./path1",
+		path: ".",
 		filename: "sampleDoc.csv",
 		body: "sample fileinformation"
 	}]
@@ -220,6 +220,6 @@ app.post('/', async (req, res) => {
 	sftp.end();
 })
 
-app.listen(process.env.PORT || 5000,(()=>{
+app.listen(process.env.PORT || 3000,(()=>{
 	console.log("listing to port 3000")
 }))
