@@ -3,15 +3,16 @@ const app = express()
 let Client = require('ssh2-sftp-client');
 let sftp = new Client();
 const fs = require('fs')
-require('dotenv').config()
+var bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
 var result;
 result = []
 app.get('/', async (req, res) => {
 	await sftp.connect({
-		host: process.env.HOST,
-		username: process.env.USERNAME,
-		password: process.env.PASSWORD
+		host: req.headers.ftphost,
+		username: req.headers.username,
+		password: req.headers.password
 	}).then(() => {
 		return sftp.list('.');
 	}).then(data => {
@@ -32,7 +33,7 @@ app.get('/download', async (req, res) => {
 			"Files": []
 		}
 
-		let remotePath = './path1';
+		let remotePath = '.';
 		let localPath = '.';
 		let files = []
 		let {
@@ -42,9 +43,9 @@ app.get('/download', async (req, res) => {
 			startsWith
 		} = req.query
 		await sftp.connect({
-			host: process.env.HOST,
-			username: process.env.USERNAME,
-			password: process.env.PASSWORD
+			host: req.headers.ftphost,
+			username: req.headers.username,
+			password: req.headers.password
 		})
 		const data = await sftp.list(remotePath);
 		for (const file of data) {
@@ -86,6 +87,8 @@ const downloadFile = async (array, remotePath, localPath) => {
 			"fileName": "",
 			"path": "",
 			"message": "file Downloaded successfully",
+			"body":'',
+			"lastModifiedDateTime":new Date(array[0].modifyTime).toISOString(),
 			"code": 200
 		}
 		if (!fs.existsSync(localPath)) {
@@ -97,12 +100,13 @@ const downloadFile = async (array, remotePath, localPath) => {
 		}
 		let localFile = localPath + "/" + array[0].name
 		let dst = fs.createWriteStream(localFile);
-		return sftp.get(remotePath + "/" + array[0].name, dst).then(() => {
+		return sftp.get(remotePath + "/" + array[0].name).then((body) => {
 			var res = {
 				...fileResponse
 			}
 			res.fileName = array[0].name
 			res.path = remotePath
+			res.body=body
 			res.message = "Successfully Downloaded " + array[0].name
 			return (res)
 		}).catch((Err) => {
@@ -121,13 +125,7 @@ const downloadFile = async (array, remotePath, localPath) => {
 }
 
 app.delete('/', async (req, res) => {
-	var array = [{
-		path: ".",
-		filename: "sampleText1.txt",
-	}, {
-		path: ".",
-		filename: "sampleDoc.csv",
-	}]
+	var array = req.body.data
 	const response = {
 		"Status": "success",
 		"Message": "Files Deleted Sucessfully!",
@@ -142,9 +140,9 @@ app.delete('/', async (req, res) => {
 	}
 	try {
 		await sftp.connect({
-			host: process.env.HOST,
-			username: process.env.USERNAME,
-			password: process.env.PASSWORD
+			host: req.headers.ftphost,
+			username: req.headers.username,
+			password: req.headers.password
 		})
 		for (const t of array) {
 			const res = await sftp.delete((t.path + "/" + t.filename), true)
@@ -170,15 +168,7 @@ app.delete('/', async (req, res) => {
 })
 
 app.post('/', async (req, res) => {
-	var array = [{
-		path: ".",
-		filename: "sampleText1.txt",
-		body: "samplebody"
-	}, {
-		path: ".",
-		filename: "sampleDoc.csv",
-		body: "sample fileinformation"
-	}]
+	var array = req.body.data
 	const response = {
 		"Status": "success",
 		"Message": "Files Uploaded Sucessfully!",
@@ -193,9 +183,9 @@ app.post('/', async (req, res) => {
 	}
 	try {
 		await sftp.connect({
-			host: process.env.HOST,
-			username: process.env.USERNAME,
-			password: process.env.PASSWORD
+			host: req.headers.ftphost,
+			username: req.headers.username,
+			password: req.headers.password
 		})
 		for (const t of array) {
 			await sftp.mkdir(t.path, true)
